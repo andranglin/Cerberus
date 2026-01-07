@@ -1,0 +1,214 @@
+param(
+    [string]$OutputDir
+)
+
+# --- Configuration ---
+$ErrorActionPreference = "SilentlyContinue"
+$DateStr = Get-Date -Format "yyyyMMdd_HHmmss"
+$LiveDir = Join-Path $OutputDir "LiveResponse_$DateStr"
+New-Item -Path $LiveDir -ItemType Directory -Force | Out-Null
+
+# Store report data for HTML generation
+$script:ReportData = @()
+
+# --- Helper Functions ---
+function Write-Log ($Message) {
+    Write-Host "    $Message" -ForegroundColor Gray
+}
+
+function Save-CSV ($CmdBlock, $FileName, $Title) {
+    try {
+        Write-Host "    [-] Collecting: $Title..." -ForegroundColor Cyan
+        $Data = & $CmdBlock
+        if ($Data) {
+            $Path = "$LiveDir\$FileName.csv"
+            $Data | Export-Csv -Path $Path -NoTypeInformation -Force
+            
+            # Add to Report Queue
+            $script:ReportData += @{
+                Type  = "CSV"
+                Title = $Title
+                Path  = $Path
+                Data  = $Data # Keep small objects in memory for faster report gen
+            }
+        } else {
+            Write-Log "No data returned for $FileName"
+        }
+    } catch {
+        Write-Host "    [!] Error collecting $FileName : $_" -ForegroundColor Red
+    }
+}
+
+function Save-Text ($CmdBlock, $FileName, $Title) {
+    try {
+        Write-Host "    [-] Collecting Text: $Title..." -ForegroundColor Cyan
+        $Data = & $CmdBlock
+        if ($Data) {
+            $Path = "$LiveDir\$FileName.txt"
+            $Data | Out-File -FilePath $Path -Encoding UTF8 -Force
+            
+            # Add to Report Queue
+            $script:ReportData += @{
+                Type  = "TXT"
+                Title = $Title
+                Path  = $Path
+                Content = ($Data | Out-String)
+            }
+        }
+    } catch {
+        Write-Host "    [!] Error collecting $FileName" -ForegroundColor Red
+    }
+}
+
+function Generate-HTMLReport {
+    Write-Host "`n    [+] Generating HTML Report..." -ForegroundColor Yellow
+    $ReportPath = "$LiveDir\LiveResponse_Report.html"
+    
+    # CSS Styling (Cerberus Dark Theme)
+    $CSS = @"
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; margin: 20px; }
+        h1 { color: #ff5252; border-bottom: 2px solid #ff5252; padding-bottom: 10px; }
+        h2 { color: #00e5ff; margin-top: 30px; border-left: 5px solid #00e5ff; padding-left: 10px; }
+        .meta { background-color: #1e1e1e; padding: 10px; border-radius: 5px; border: 1px solid #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
+        th, td { padding: 8px 12px; border: 1px solid #333; text-align: left; }
+        th { background-color: #2c2c2c; color: #ffffff; }
+        tr:nth-child(even) { background-color: #1a1a1a; }
+        tr:hover { background-color: #333; }
+        pre { background-color: #000; padding: 15px; border: 1px solid #444; color: #00ff00; overflow-x: auto; }
+        .download { font-size: 0.8em; color: #888; text-decoration: none; margin-left: 10px; }
+        .footer { margin-top: 50px; font-size: 0.8em; color: #555; text-align: center; border-top: 1px solid #333; padding-top: 10px; }
+    </style>
+"@
+
+    # HTML Header
+    $HTML = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cerberus Live Response Report</title>
+    $CSS
+</head>
+<body>
+    <h1>CERBERUS TRIAGE: Live Response Report</h1>
+    <div class='meta'>
+        <strong>Hostname:</strong> $env:COMPUTERNAME <br>
+        <strong>User:</strong> $env:USERNAME <br>
+        <strong>Date:</strong> $(Get-Date) <br>
+        <strong>Case ID:</strong> $(Split-Path $OutputDir -Leaf)
+    </div>
+"@
+
+    # Process each collected item
+    foreach ($Item in $script:ReportData) {
+        $HTML += "<h2>$($Item.Title) <a href='$($Item.Path | Split-Path -Leaf)' class='download'>[Download Source]</a></h2>"
+        
+        if ($Item.Type -eq "CSV") {
+            # Convert Object Data to HTML Table
+            # Limit to first 50 rows to prevent massive HTML files
+            $TableData = $Item.Data | Select-Object -First 50
+            if ($TableData) {
+                $TableParams = @{
+                    Fragment = $true
+                    As = "Table"
+                }
+                $TableHTML = $TableData | ConvertTo-Html @TableParams
+                # Simple Highlighting
+                $TableHTML = $TableHTML -replace "<tr>", "<tr class='row'>"
+                $HTML += $TableHTML
+            } else {
+                $HTML += "<p>No data available.</p>"
+            }
+            
+            if (($Item.Data).Count -gt 50) {
+                $HTML += "<p style='color:orange'><em>* Display limited to first 50 rows. See CSV for full data.</em></p>"
+            }
+
+        } elseif ($Item.Type -eq "TXT") {
+            # Wrap Text Data in Pre tags
+            $HTML += "<pre>$($Item.Content)</pre>"
+        }
+    }
+
+    # Footer
+    $HTML += @"
+    <div class='footer'>
+        Generated by Cerberus Triage Toolkit | RootGuard DFIR
+    </div>
+</body>
+</html>
+"@
+
+    $HTML | Out-File -FilePath $ReportPath -Encoding UTF8
+    Write-Host "    [+] Report Saved: $ReportPath" -ForegroundColor Green
+    Start-Process $ReportPath
+}
+
+Write-Host "[-] Starting Cerberus Live Response v7.0..." -ForegroundColor Green
+Write-Host "    Output: $LiveDir" -ForegroundColor Gray
+
+# ==========================================
+# 1. SYSTEM INFORMATION & METADATA
+# ==========================================
+Write-Host "`n[1/10] System Information..." -ForegroundColor Yellow
+
+Save-CSV { Get-ComputerInfo | Select-Object OsName, OsVersion, CsName, WindowsVersion, BiosSeralNumber } "System_ComputerInfo" "System Information"
+Save-CSV { Get-WmiObject -Class Win32_OperatingSystem | Select-Object Caption, Version, InstallDate, LastBootUpTime } "System_OS_WMI" "OS Details (WMI)"
+Save-Text { (Get-WmiObject -Class Win32_OperatingSystem).LastBootUpTime } "System_LastBootTime" "Last Boot Time"
+Save-Text { Get-ChildItem env:\ } "System_EnvironmentVariables" "Environment Variables"
+
+# ==========================================
+# 2. USER ACTIVITY & LOGINS
+# ==========================================
+Write-Host "`n[2/10] User Activity..." -ForegroundColor Yellow
+
+Save-Text { query user 2>&1 } "User_Quser" "Active Users (QUser)"
+Save-CSV { Get-LocalUser | Select-Object Name, Enabled, LastLogon } "User_LocalAccounts" "Local User Accounts"
+Save-CSV { Get-LocalGroupMember Administrators | Select-Object Name, PrincipalSource, ObjectClass } "User_LocalAdmins" "Local Administrators"
+Save-CSV { Get-EventLog -LogName Security -InstanceId 4624 -Newest 20 | Select-Object TimeGenerated, EntryType, Message } "User_LogonEvents_4624" "Recent Logons (Event 4624)"
+
+# ==========================================
+# 3. NETWORK INFORMATION
+# ==========================================
+Write-Host "`n[3/10] Network Information..." -ForegroundColor Yellow
+
+Save-CSV { Get-NetIPAddress | Select-Object InterfaceAlias, IPAddress, PrefixOrigin } "Net_IPConfig" "IP Configuration"
+Save-CSV { Get-SmbShare | Select-Object Name, Path, Description } "Net_SMBShares" "SMB Shares"
+
+# Filtered Connections
+Save-CSV { Get-NetTCPConnection | Where-Object { $_.State -eq 'Established' } | Select-Object LocalAddress, LocalPort, RemoteAddress, RemotePort, State, OwningProcess, CreationTime } "Net_Established" "Active Connections (Established)"
+Save-Text { ipconfig /displaydns } "Net_DNSCache_Legacy" "DNS Cache"
+
+# ==========================================
+# 4. PROCESS & SERVICE MONITORING
+# ==========================================
+Write-Host "`n[4/10] Process & Services..." -ForegroundColor Yellow
+
+Save-CSV { Get-Process | Sort-Object StartTime -Descending | Select-Object Id, ProcessName, StartTime, MainWindowTitle, Path } "Proc_AllProcesses" "Running Processes"
+Save-CSV { Get-Service | Where-Object { $_.Status -eq 'Running' } | Select-Object Name, DisplayName, StartType } "Proc_Services_Running" "Running Services"
+
+# Detailed Process info via WMI (Command Line is key)
+Save-CSV { Get-CimInstance -Class Win32_Process | Select-Object ProcessId, Name, CommandLine } "Proc_CommandLine_WMI" "Process Command Lines"
+
+# ==========================================
+# 5. PERSISTENCE & REGISTRY
+# ==========================================
+Write-Host "`n[5/10] Persistence & Registry..." -ForegroundColor Yellow
+
+Save-CSV { Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSDrive, PSProvider } "Reg_Run_HKLM" "HKLM Run Keys"
+Save-CSV { Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" | Select-Object * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSDrive, PSProvider } "Reg_Run_HKCU" "HKCU Run Keys"
+
+# ==========================================
+# 6. MALWARE & WMI PERSISTENCE
+# ==========================================
+Write-Host "`n[6/10] Malware & WMI Events..." -ForegroundColor Yellow
+
+Save-CSV { Get-ScheduledTask | Where-Object { $_.State -eq 'Ready' -or $_.State -eq 'Running' } | Select-Object TaskName, TaskPath, State } "Mal_ScheduledTasks" "Active Scheduled Tasks"
+Save-CSV { Get-WmiObject -Namespace "root\subscription" -Class __EventFilter } "WMI_EventFilters" "WMI Event Filters"
+Save-CSV { Get-WmiObject -Namespace "root\subscription" -Class __EventConsumer } "WMI_EventConsumers" "WMI Event Consumers"
+
+# ==========================================
+# 7. GENERATE REPORT
+# ==========================================
+Generate-HTMLReport
