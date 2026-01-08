@@ -1,117 +1,118 @@
-# 🐕 Cerberus Triage Toolkit
+Copy-paste this directly into your README.md file (or edit via GitHub web interface).
+Markdown# Cerberus Triage Toolkit 🛡️
 
-<div align="center">
+[![Stars](https://img.shields.io/github/stars/andranglin/Cerberus?style=social)](https://github.com/andranglin/Cerberus/stargazers)
+[![Forks](https://img.shields.io/github/forks/andranglin/Cerberus?style=social)](https://github.com/andranglin/Cerberus/network/members)
+[![License](https://img.shields.io/github/license/andranglin/Cerberus)](https://github.com/andranglin/Cerberus/blob/main/LICENSE)
+[![Releases](https://img.shields.io/github/v/release/andranglin/Cerberus)](https://github.com/andranglin/Cerberus/releases)
 
-![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue.svg?style=flat&logo=powershell)
-![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg?style=flat&logo=windows)
-![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat)
-![Maintenance](https://img.shields.io/badge/Maintained-Yes-orange.svg)
+**A modular, agentless PowerShell-based Incident Response framework for rapid evidence collection, live forensics, and remote acquisition.**
 
-**A modular, agentless Incident Response framework for rapid evidence collection, live analysis, and remote acquisition.**
+Cerberus integrates industry-standard tools (EZTools, KAPE, Volatility 3, Hindsight) into a unified automation engine. Using a "Zip & Ship" approach over WinRM, it deploys tools to remote Windows endpoints, executes collection/analysis, and retrieves evidence—all from your analyst workstation without installing agents.
 
-[Features](#-key-features) • [Installation](#-installation) • [Usage](#-usage) • [Directory Structure](#-directory-structure) • [Contributing](#-contributing)
+Ideal for blue teamers, incident responders, and DFIR professionals needing fast, scalable triage across enterprise environments.
 
-</div>
-
----
-
-**Cerberus** integrates industry-standard forensic tools (**EZTools**, **KAPE**, **Volatility**, **Hindsight**) into a unified PowerShell automation engine. It uses a "Zip & Ship" architecture to push tools to remote endpoints via WinRM, execute analysis, and retrieve evidence—all without leaving your workstation.
-
-> [!IMPORTANT]
-> **Tooling & Licensing**
-> This repository contains the **automation logic only**. Due to licensing restrictions, it does **not** distribute third-party binaries (KAPE, EZTools, etc.). You must populate the `./Tools/` directory using the provided instructions below.
+[Features](#-key-features) • [Requirements](#-requirements) • [Installation](#-installation) • [Usage](#-usage) • [Directory Structure](#-directory-structure) • [Troubleshooting](#-troubleshooting) • [Contributing](#-contributing) • [License](#-license)
 
 ---
 
 ## 🚀 Key Features
 
-| Feature | Description |
-| :--- | :--- |
-| **📡 Agentless Acquisition** | Push-button deployment via WinRM using `Invoke-RemoteForensics`. |
-| **🧠 Smart Memory Capture** | Auto-detects environment to choose between `MagnetRAMCapture` (Secure Boot) or `DumpIt`. |
-| **⚡ Live Response Mode** | Instantly generate HTML reports of running processes, active connections, and logged-on users. |
-| **🕵️ Browser Forensics** | Automated parsing of Chrome/Edge history using **Hindsight** (Outputs to XLSX & HTML). |
-| **🔎 Volatility Integration** | Includes support for `Volatility 3` for immediate memory analysis. |
-| **📊 Unified Reporting** | Generates a styled, interactive HTML Triage Report linking all collected evidence. |
+| Feature                  | Description                                                                 |
+|--------------------------|-----------------------------------------------------------------------------|
+| 📡 **Agentless Acquisition** | One-click remote deployment via WinRM with `Invoke-RemoteForensics.ps1`.   |
+| 🧠 **Smart Memory Capture**  | Auto-detects Secure Boot to select Magnet RAM Capture or DumpIt.            |
+| ⚡ **Live Response Mode**    | Rapid HTML reports for processes, network connections, and logged-on users.|
+| 🌐 **Browser Forensics**     | Automated Chrome/Edge history parsing with Hindsight (XLSX + HTML output).  |
+| 🔎 **Volatility Integration**| Built-in Volatility 3 support for on-the-fly memory analysis.              |
+| 📊 **Unified Reporting**     | Styled, interactive HTML triage report with links to all artifacts.        |
+
+---
+
+## ✅ Requirements
+
+- Windows PowerShell 5.1+ (or PowerShell 7 recommended)
+- WinRM enabled on target systems (common in domain environments)
+- Administrative privileges on targets
+- Network connectivity (ports 5985/HTTP or 5986/HTTPS for WinRM)
 
 ---
 
 ## 📦 Installation
 
 ### 1. Clone the Repository
-```bash
-git clone [https://github.com/andranglin/Cerberus-Triage.git](https://github.com/andranglin/Cerberus.git)
+```powershell
+git clone https://github.com/andranglin/Cerberus.git
 cd Cerberus
-
-2. Initialize the Framework
-Run the setup script to create the necessary directory structure and placeholder files.
-.\Initialize-Cerberus.ps1
-
+2. Initialise the Framework
+Creates required folders and placeholders:
+PowerShell.\Initialize-Cerberus.ps1
 3. Populate External Tools
-Cerberus relies on specific external binaries. Download and place them in the following paths:
-EZTools: Download from Eric Zimmerman's GitHub → .\Tools\EZTools\
-KAPE: Download from Kroll → .\Tools\kape\
-Hindsight: Download from Obsidian Forensics → .\Tools\hindsight\
-Volatility 3: Download from Volatility Foundation → .\Tools\volatility3\
+Download the latest versions and extract/place executables in the exact subfolders below:
 
-Memory Tools:
-Magnet: Place executable in .\Tools\MagnetRAMCapture\
-DumpIt: Place executable in .\Tools\dumpit\
+EZTools → Eric Zimmerman's Tools → .\Tools\EZTools\
+KAPE → Kroll Artifact Parser and Extractor → .\Tools\kape\
+Hindsight → Obsidian Forensics Releases → .\Tools\hindsight\
+Volatility 3 → Volatility Foundation → .\Tools\volatility3\
+DumpIt → MoonSols/Comae → .\Tools\dumpit\
+Magnet RAM Capture → Magnet Forensics → .\Tools\MagnetRAMCapture\
+
+Note: Tools are not bundled to ensure you always use the latest, verified versions.
 
 🛠 Usage
-Option 1: Main Console (Recommended)
-Launch the interactive console to access all modules from a menu-driven interface.
-.\Cerberus_Console.ps1
-
-Option 2: Remote Forensics
-Target a remote machine directly using the module. This handles authentication, tool deployment, and retrieval.
-# Syntax
-.\Modules\Invoke-RemoteForensics.ps1 -TargetComputer <NAME> -Credential (Get-Credential) -Mode <1-4>
-
-# Example: Full Collection (Artifacts + Memory)
-$Creds = Get-Credential
+Option 1: Interactive Console (Recommended)
+PowerShell.\Cerberus_Console.ps1
+Menu-driven access to all modules.
+Option 2: Remote Forensics (Direct Targeting)
+PowerShell.\Modules\Invoke-RemoteForensics.ps1 -TargetComputer <HOSTNAME> -Credential (Get-Credential) -Mode <1-4>
+Example (Full Collection):
+PowerShell$Creds = Get-Credential
 .\Modules\Invoke-RemoteForensics.ps1 -TargetComputer "WORKSTATION-01" -Credential $Creds -Mode 3
+Modes:
 
-Collection Modes:
-Mode 1 (Triage): Standard Artifacts (MFT, Registry, Evtx) + Browser History.
-Mode 2 (Deep): Triage + Deep Registry Parse + Amcache.
-Mode 3 (Full): All Artifacts + Memory Capture.
-Mode 4 (Live): Live Response only (Processes, Network, Users) - Fastest.
+1 (Triage): Core artifacts + browser history
+2 (Deep): Triage + advanced registry/amcache
+3 (Full): Everything + memory dump
+4 (Live): Quick live response only
 
-Option 3: Local Standalone
-Run individual modules directly on a suspect machine (e.g., via USB execution).
-# Collect standard artifacts
-.\Modules\Invoke-WinArtifacts.ps1 -OutputDir "C:\Evidence"
-
-# Capture Memory Only
+Option 3: Local Execution
+PowerShell.\Modules\Invoke-WinArtifacts.ps1 -OutputDir "C:\Evidence"
 .\Modules\Invoke-MemoryCapture.ps1 -OutputDir "C:\Evidence"
 
 📂 Directory Structure
-Ensure your folder looks exactly like this. The scripts rely on these specific folder names to find the tools.
-Cerberus/
-│
-├── Cerberus_Console.ps1          # Main Launcher
-├── Initialize-Cerberus.ps1       # Setup Script
-├── Config/                       # Configuration files
-│
-├── Modules/                      # PowerShell Logic
-│   ├── Analyze-Results.ps1
-│   ├── Invoke-KapeCollection.ps1
-│   ├── Invoke-LiveResponse.ps1
-│   ├── Invoke-MemoryCapture.ps1
-│   ├── Invoke-RemoteForensics.ps1
-│   ├── Invoke-Vol3Analysis.ps1
-│   └── Invoke-WinArtifacts.ps1
-│
-└── Tools/                        # Third-Party Binaries
-    ├── EZTools/                  # [Download Here]
-    ├── kape/                     # [Download Here]
-    ├── hindsight/                # [Download Here]
-    ├── volatility3/              # [Download Here]
-    ├── dumpit/                   # [Download Here]
-    └── MagnetRAMCapture/         # [Download Here]
+textCerberus/
+├── Cerberus_Console.ps1
+├── Initialize-Cerberus.ps1
+├── Config/                       # Config files
+├── Modules/                      # Core PowerShell scripts
+└── Tools/                        # Third-party tools (populate manually)
+    ├── EZTools/
+    ├── kape/
+    ├── hindsight/
+    ├── volatility3/
+    ├── dumpit/
+    └── MagnetRAMCapture/
+
+🐛 Troubleshooting
+
+WinRM Errors: Run winrm quickconfig on targets or enable via GPO.
+Tool Not Found: Verify exact paths and executable names in Tools/.
+Execution Policy: Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+Issues? Open an Issue on GitHub.
+
+
+🤝 Contributing
+Contributions welcome! Please:
+
+Fork the repo
+Create a feature branch
+Submit a Pull Request with clear description
+
+Ideas: New modules, better error handling, additional tool integrations.
 
 ⚖️ Disclaimer & License
-Cerberus is provided "as is" without warranty of any kind. The user is responsible for ensuring they have the necessary legal authorization to run forensic tools on the target infrastructure.
+Cerberus is provided "as is" without warranty. Ensure legal authorisation before use on systems.
+MIT License – see LICENSE for details.
 
-Distributed under the MIT License.
+Acknowledgements: Built on the amazing work of Eric Zimmerman, Troy Larson (KAPE), Obsidian Forensics (Hindsight), Volatility Foundation, and the broader DFIR community.
+⭐ Star the repo if this helps your investigations!
