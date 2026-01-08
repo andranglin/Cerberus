@@ -1,29 +1,64 @@
 # --- CERBERUS IGNORE LIST ---
+# PowerShell DFIR Investigation Toolkit
+# https://github.com/andranglin/Cerberus
 
 # --- Evidence & Output ---
-# Ignore the actual forensic data collected
+# Ignore collected forensic data, reports, and large archives
 Evidence/
 Output/
 Triage_*/
 MemDump_*/
 *.tar.gz
 *.zip
+*.7z
 *.lime
 *.lime.gz
+*.raw
+*.mem
 *.vhdx
+*.vmdk
 *.csv
 *.xlsx
+*.json
 *.jsonl
 *.html
 *.log
+*.evtx
+*.tlb
 
 # --- Tools ---
-# Do not upload the binary tools (EZTools, Hindsight, avml)
-# Users should download these themselves to ensure they are clean/up-to-date
-Bin/
+# Do not upload third-party binary tools (EZTools, KAPE, Hindsight, Volatility3, DumpIt, etc.)
+# Users should download and populate these themselves for latest/clean versions
+Tools/
+Tools/**
+# Optional: If you ever use a Bin/ folder instead
+# Bin/
 
-# --- Temporary/System ---
+# --- PowerShell / Development Temp Files ---
+# VS Code / Editor artifacts
+.vscode/
+*.vsix
+
+# PowerShell temporary/session files
+*.ps1.bak
+*.ps1.tmp
+*.pssession
+Transcript*.txt
+
+# Windows/macOS system files
 .DS_Store
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- General Temp/Backup ---
 *.tmp
 *.bak
+*.cache
+~*.*
+
+# --- Optional: Large file extensions (if any slip in) ---
+*.exe
+*.dll
+*.sys
+*.iso
