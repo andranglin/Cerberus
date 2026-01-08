@@ -45,8 +45,9 @@ Ideal for blue teamers, incident responders, and DFIR professionals needing fast
 git clone https://github.com/andranglin/Cerberus.git
 cd Cerberus
 2. Initialise the Framework
-Creates required folders and placeholders:
-PowerShell.\Initialize-Cerberus.ps1
+This creates the required folders and placeholders:
+```powerShell
+.\Initialize-Cerberus.ps1
 3. Populate External Tools
 Download the latest versions and extract/place executables in the exact subfolders below:
 
@@ -61,22 +62,27 @@ Note: Tools are not bundled to ensure you always use the latest, verified versio
 
 🛠 Usage
 Option 1: Interactive Console (Recommended)
-PowerShell.\Cerberus_Console.ps1
+```PowerShell
+.\Cerberus_Console.ps1
 Menu-driven access to all modules.
-Option 2: Remote Forensics (Direct Targeting)
-PowerShell.\Modules\Invoke-RemoteForensics.ps1 -TargetComputer <HOSTNAME> -Credential (Get-Credential) -Mode <1-4>
-Example (Full Collection):
-PowerShell$Creds = Get-Credential
-.\Modules\Invoke-RemoteForensics.ps1 -TargetComputer "WORKSTATION-01" -Credential $Creds -Mode 3
-Modes:
 
+Option 2: Remote Forensics (Direct Targeting)
+```PowerShell
+.\Modules\Invoke-RemoteForensics.ps1 -TargetComputer <HOSTNAME> -Credential (Get-Credential) -Mode <1-4>
+Example (Full Collection):
+```PowerShell
+$Creds = Get-Credential
+.\Modules\Invoke-RemoteForensics.ps1 -TargetComputer "WORKSTATION-01" -Credential $Creds -Mode 3
+
+Modes:
 1 (Triage): Core artifacts + browser history
 2 (Deep): Triage + advanced registry/amcache
 3 (Full): Everything + memory dump
 4 (Live): Quick live response only
 
 Option 3: Local Execution
-PowerShell.\Modules\Invoke-WinArtifacts.ps1 -OutputDir "C:\Evidence"
+```PowerShell
+.\Modules\Invoke-WinArtifacts.ps1 -OutputDir "C:\Evidence"
 .\Modules\Invoke-MemoryCapture.ps1 -OutputDir "C:\Evidence"
 
 📂 Directory Structure
@@ -106,7 +112,7 @@ Contributions welcome! Please:
 
 Fork the repo
 Create a feature branch
-Submit a Pull Request with clear description
+Submit a Pull Request with a clear description
 
 Ideas: New modules, better error handling, additional tool integrations.
 
