@@ -1,4 +1,3 @@
-Copy-paste this directly into your README.md file (or edit via GitHub web interface).
 Markdown# Cerberus Triage Toolkit 🛡️
 
 [![Stars](https://img.shields.io/github/stars/andranglin/Cerberus?style=social)](https://github.com/andranglin/Cerberus/stargazers)
@@ -120,5 +119,5 @@ Ideas: New modules, better error handling, additional tool integrations.
 Cerberus is provided "as is" without warranty. Ensure legal authorisation before use on systems.
 MIT License – see LICENSE for details.
 
-Acknowledgements: Built on the amazing work of Eric Zimmerman, Troy Larson (KAPE), Obsidian Forensics (Hindsight), Volatility Foundation, and the broader DFIR community.
+Acknowledgements: Built on the amazing work of Eric Zimmerman (KAPE), Obsidian Forensics (Hindsight), Volatility Foundation, and the broader DFIR community.
 ⭐ Star the repo if this helps your investigations!
