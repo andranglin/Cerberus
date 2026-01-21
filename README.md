@@ -1,4 +1,3 @@
-Markdown# Cerberus Triage Toolkit 🛡️
 
 [![Stars](https://img.shields.io/github/stars/andranglin/Cerberus?style=social)](https://github.com/andranglin/Cerberus/stargazers)
 [![Forks](https://img.shields.io/github/forks/andranglin/Cerberus?style=social)](https://github.com/andranglin/Cerberus/network/members)
